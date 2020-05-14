@@ -1,0 +1,31 @@
+{
+  "name": "gorillagraphql",
+  "version": "1.0.0",
+  "description": "Gorilla Media Monitoring System",
+  "main": "index.js",
+  "scripts": {
+    "start": "node .",
+    "dev": "nodemon ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RubennCastilloo/gorilla-project.git"
+  },
+  "author": "Ruben Castillo",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RubennCastilloo/gorilla-project/issues"
+  },
+  "homepage": "https://github.com/RubennCastilloo/gorilla-project#readme",
+  "dependencies": {
+    "apollo-server": "^2.13.0",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^8.2.0",
+    "jsonwebtoken": "^8.5.1",
+    "moment": "^2.25.3",
+    "mongoose": "^5.9.12"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.3"
+  }
+}
