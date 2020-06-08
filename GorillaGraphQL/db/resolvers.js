@@ -1,6 +1,7 @@
 const Usuario = require('../models/Usuarios');
 const Cliente = require('../models/Clientes');
 const Query = require('../models/Querys');
+const Nota = require('../models/Notas');
 const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config({ path: 'variables.env'});
@@ -26,6 +27,15 @@ const resolvers = {
             return ctx.usuario;
 
         },
+        obtenerUsuarioActualizar: async (_, { id }, ctx) => {
+            const usuarioValidar = await Usuario.findById(id);
+
+            if(!usuarioValidar){
+                throw new Error('El usuario no existe');
+            }
+
+            return usuarioValidar;
+        },
         obtenerUsuarios: async () => {
             try {
                 const usuarios = await Usuario.find({});
@@ -38,6 +48,15 @@ const resolvers = {
             const clienteId = await jwt.verify(token, process.env.SECRETA);
 
             return clienteId;
+        },
+        obtenerClienteActualizar: async (_, { id }, ctx) => {
+            const clienteValidar = await Cliente.findById(id);
+
+            if(!clienteValidar){
+                throw new Error('El usuario no existe');
+            }
+
+            return clienteValidar;
         },
         obtenerClientes: async () => {
             try {
@@ -63,10 +82,20 @@ const resolvers = {
                 throw new Error('La empresa no se encuentra registrada');
             }
             return query;
+        },
+        obtenerNotas: async () => {
+            try {
+                const notas = await Nota.find({});
+                return notas;
+
+            } catch (error) {
+                console.log(error);
+            }
         }
+        
     },
     Mutation: {
-        nuevoUsuario: async (_, { input }) => {
+        nuevoUsuario: async (_, { input }, ctx) => {
 
             const {email, password } = input;
             
@@ -75,6 +104,13 @@ const resolvers = {
             if(existeUsuario) {
                 throw new Error('El usuario ya se encuentra registrado');
             }
+            
+            const credenciales = ctx.usuario.tipoUsuario.toString();
+
+            if(credenciales !== 'sistemas' && credenciales !== 'administrador') {
+                throw new Error('No tienes las credenciales para realizar la accion');
+            }
+
             //Hashear su password
             const salt = await bcryptjs.genSalt(10);
             input.password = await bcryptjs.hash(password, salt);
@@ -105,10 +141,38 @@ const resolvers = {
             if(!passwordCorrecto){
                 throw new Error('El Password es Incorrecto');
             }
+
+            const estadoUsuario = await Usuario.findOne({email});
+            // console.log(estadoUsuario.estadoUsuario);
+            if(estadoUsuario.estadoUsuario === 'inactivo'){
+                throw new Error('Lo sentimos, no puedes ingresar al sistema');
+            }
             //Crear el token
             return {
                 token: crearToken(existeUsuario, process.env.SECRETA, '8h')
             }
+        },
+        actualizarUsuario: async (_, {id, input}, ctx) => {
+            
+            //Verificar si existe
+            let usuario = await Usuario.findById(id);
+
+            if(!usuario) {
+                throw new Error('El usuario no existe');
+            }
+
+            //Verificar si la persona que edita tiene las credenciales
+            const credenciales = ctx.usuario.tipoUsuario.toString();
+            // console.log(credenciales);
+
+            if(credenciales === 'monitorista'){
+                throw new Error('No tienes las credenciales para realizar la accion');
+            }
+
+            //Guardar el usuario
+            usuario = await Usuario.findOneAndUpdate({_id: id}, input, {new: true});
+            return usuario;
+
         },
         eliminarUsuario: async (_, {id}, ctx) => {
 
@@ -116,10 +180,10 @@ const resolvers = {
             if(!usuario){
                 throw new Error('El usuario no existe');
             }
-            const credenciales = ctx.usuario.tipoUsuario;
-            console.log(ctx.usuario.tipoUsuario.toString());
+            const credenciales = ctx.usuario.tipoUsuario.toString();
+            console.log(credenciales);
 
-            if(ctx.usuario.tipoUsuario.toString() === 'monitorista'){
+            if(credenciales !== 'administrador' && credenciales !== 'sistemas'){
                 throw new Error('No tienes las credenciales para realizar la accion');
             }
 
@@ -127,7 +191,7 @@ const resolvers = {
             return "Usuario Eliminado"
 
         },
-        nuevoCliente: async (_, { input }) => {
+        nuevoCliente: async (_, { input }, ctx) => {
 
             const {email, password } = input;
             
@@ -136,6 +200,12 @@ const resolvers = {
             if(existeCliente) {
                 throw new Error('El usuario ya se encuentra registrado');
             }
+
+            const credenciales = ctx.usuario.tipoUsuario.toString();
+            if(credenciales !== 'administrador' && credenciales !== 'sistemas'){
+                throw new Error('No tienes las credenciales para realizar la accion');
+            }
+            
             //Hashear su password
             const salt = await bcryptjs.genSalt(10);
             input.password = await bcryptjs.hash(password, salt);
@@ -170,6 +240,44 @@ const resolvers = {
             return {
                 token: crearTokenCliente(existeCliente, process.env.SECRETA, '8h')
             }
+        },
+        eliminarCliente: async (_, {id}, ctx) => {
+
+            let cliente = await Cliente.findById(id);
+            if(!cliente){
+                throw new Error('El usuario no existe');
+            }
+            const credenciales = ctx.usuario.tipoUsuario.toString();
+            // console.log(credenciales);
+
+            if(credenciales !== 'administrador' && credenciales !== 'sistemas'){
+                throw new Error('No tienes las credenciales para realizar la accion');
+            }
+
+            await Cliente.findOneAndDelete({_id: id});
+            return "Cliente Eliminado"
+        },
+        actualizarCliente: async (_, {id, input}, ctx) => {
+            
+            //Verificar si existe
+            let cliente = await Cliente.findById(id);
+
+            if(!cliente) {
+                throw new Error('El usuario no existe');
+            }
+
+            //Verificar si la persona que edita tiene las credenciales
+            const credenciales = ctx.usuario.tipoUsuario.toString();
+            // console.log(credenciales);
+
+            if(credenciales !== 'administrador' && credenciales !== 'sistemas'){
+                throw new Error('No tienes las credenciales para realizar la accion');
+            }
+
+            //Guardar el usuario
+            cliente = await Cliente.findOneAndUpdate({_id: id}, input, {new: true});
+            return cliente;
+
         },
         nuevoQuery: async (_, {input}) => {
             const { empresa } = input;
@@ -212,6 +320,21 @@ const resolvers = {
             await Query.findOneAndDelete({_id: id});
             return 'Cuenta eliminada';
 
+        },
+
+        //NOTAS 
+        nuevaNota: async (_, {input}, ctx) => {
+
+            try {
+
+                //Guardarlo en la Base de Datos
+                const nota = new Nota(input);
+                nota.save();
+                return nota;
+
+            } catch (error) {
+                console.log(error);
+            }
         }
     }
 }

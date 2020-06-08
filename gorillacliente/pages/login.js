@@ -14,6 +14,7 @@ const AUTENTICAR_USUARIO = gql`
 `;
 
 const Login = () => {
+
     
     //Routing
     const router = useRouter();
@@ -60,7 +61,7 @@ const Login = () => {
                 setTimeout(() => {
                     guardarMensaje(null);
                     router.push('/');
-                }, 2000);
+                }, 3000);
                 
             } catch (error) {
                 guardarMensaje(error.message.replace('GraphQL error: ', ''));
@@ -80,6 +81,7 @@ const Login = () => {
             </div>
         )
     }
+
 
     return(
         <>

@@ -9,28 +9,32 @@ import Swal from 'sweetalert2';
 
 
 
-const NUEVO_USUARIO = gql`
-    mutation nuevoUsuario($input: UsuarioInput) {
-        nuevoUsuario(input: $input) {
+const NUEVO_CLIENTE = gql`
+   mutation nuevoCliente($input: ClienteInput) {
+        nuevoCliente(input: $input) {
             id
             nombre
             apellido
             email
-            ingreso
             tipoUsuario
-            estadoUsuario
-            monitoreo
+            ingreso
+            telefono
+            estado
+            recibeCorreo
+            recibeWhatsapp
+            cliente
         }
     }
 `;
 
-const OBTENER_USUARIOS = gql`
-   query obtenerUsuarios {
-        obtenerUsuarios{
+const OBTENER_CLIENTES = gql`
+   query obtenerClientes {
+        obtenerClientes{
             id
             nombre
             apellido
             email
+            estado
         }
     }
 `;
@@ -44,14 +48,14 @@ const NuevaCuenta = () => {
     //State para el mensaje
     const [ mensaje, guardarMensaje ] = useState(null);
 
-    const [ nuevoUsuario ] = useMutation(NUEVO_USUARIO, {
-        update(cache, { data: { nuevoUsuario }}) {
-            const { obtenerUsuarios } = cache.readQuery({ query: OBTENER_USUARIOS });
+    const [ nuevoCliente ] = useMutation(NUEVO_CLIENTE, {
+        update(cache, { data: { nuevoCliente }}) {
+            const { obtenerClientes } = cache.readQuery({ query: OBTENER_CLIENTES });
 
             cache.writeQuery({
-                query: OBTENER_USUARIOS,
+                query: OBTENER_CLIENTES,
                 data: {
-                    obtenerUsuarios: [...obtenerUsuarios, nuevoUsuario]
+                    obtenerClientes: [...obtenerClientes, nuevoCliente]
                 }
             })
         }
@@ -63,10 +67,15 @@ const NuevaCuenta = () => {
             nombre: '',
             apellido: '',
             email: '',
+            telefono: '',
             password: '',
             ConfirmarPassword: '',
-            select: '',
-            estadoUsuario: ''
+            tipoUsuario: '',
+            recibeCorreo: '',
+            recibeWhatsapp: '',
+            estado: ''
+
+
         },
         validationSchema: Yup.object({
             nombre: Yup.string()
@@ -79,6 +88,11 @@ const NuevaCuenta = () => {
                       .email('El Email no es valido')
                       .required('El Email es obligatorio'),
 
+            telefono: Yup.number()
+                         .typeError('Solo se aceptan números')
+                         .required('El Teléfono es obligatorio')
+                         .min(10, 'El Teléfono debe ser de al menos 10 caracteres'),          
+
             password: Yup.string()
                          .required('El Password es obligatorio')
                          .min(6, 'El password debe ser de al menos 6 caracteres'),
@@ -87,28 +101,37 @@ const NuevaCuenta = () => {
                         .required('El Password es obligatorio')
                         .oneOf([Yup.ref('password'), null], 'Los password deben de coincidir'),
 
-            select: Yup.string()
+            tipoUsuario: Yup.string()
                        .required('El Campo es obligatorio'),
 
-            estadoUsuario: Yup.string()
-                              .required('El Campo es obligatorio')
+            estado: Yup.string()
+                       .required('El Campo es obligatorio'),
+
+            recibeCorreo: Yup.string()
+                       .required('El Campo es obligatorio'),
+
+            recibeWhatsapp: Yup.string()
+                       .required('El Campo es obligatorio')
         }),
         onSubmit: async valores => {
-            const {nombre, apellido, email, password, select,  estadoUsuario} = valores;
+            const {nombre, apellido, email, telefono, password, tipoUsuario, recibeCorreo, recibeWhatsapp, estado } = valores;
             // console.log('enviando...');
-            // console.log(valores);
+            console.log(valores);
 
             try {
-                const {data} = await nuevoUsuario({
+                const {data} = await nuevoCliente({
                     variables : {
                         input: {
                             nombre,
                             apellido,
                             email,
                             password,
-                            tipoUsuario : select,
-                            monitoreo: 'monitoreo',
-                            estadoUsuario
+                            tipoUsuario,
+                            telefono,
+                            estado,
+                            recibeCorreo,
+                            recibeWhatsapp,
+                            cliente: 'cliente'
                         }
                     }
                 });
@@ -116,7 +139,7 @@ const NuevaCuenta = () => {
 
                 Swal.fire(
                     'Creado Correctamente',
-                    `Se creo el usuario ${data.nuevoUsuario.nombre} ${data.nuevoUsuario.apellido}`,
+                    `Se creo el usuario ${data.nuevoCliente.nombre} ${data.nuevoCliente.apellido}`,
                     'success'
                 )
 
@@ -126,7 +149,7 @@ const NuevaCuenta = () => {
 
                 setTimeout(() => {
                     guardarMensaje(null);
-                    router.push('/listausuarios');
+                    router.push('/listaclientes');
                 }, 1500);
 
                 
@@ -156,9 +179,9 @@ const NuevaCuenta = () => {
 
            
 
-                <h1 className="text-2xl text-gray-800 font-light">Crear Nueva Cuenta</h1>
+                <h1 className="text-2xl text-gray-800 font-light">Crear Cuenta Cliente</h1>
                 <div className="mt-5">
-                        <Link href="/listausuarios">
+                        <Link href="/listaclientes">
                             <button
                                 type="button"
                                 className="flex justify-center item center bg-green-600 py-2 px-4 text-white font-bold rounded text-xs uppercase"
@@ -170,7 +193,7 @@ const NuevaCuenta = () => {
                 <div className="flex justify-center mt-5">
                 <div className="w-full max-w-lg">
                 {mensaje && mostrarMensaje() }
-                        <form
+                <form
                             className="bg-white shadow-md px-8 pt-6 pb-8 mb-4"
                             onSubmit={formik.handleSubmit} 
                             id="form"   
@@ -243,6 +266,28 @@ const NuevaCuenta = () => {
                             ) : null }
 
                             <div className="mb-4">
+                                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="telefono">
+                                    Teléfono
+                                </label>
+                                <input 
+                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    id="telefono"
+                                    type="tel"
+                                    placeholder="Teléfono Usuario"
+                                    onChange={formik.handleChange}
+                                    onBlur={formik.handleBlur}
+                                    value={formik.values.telefono}
+                                />
+                            </div>
+
+                            { formik.touched.telefono &&  formik.errors.telefono ? (
+                                <div className="my-2 bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
+                                    <p className="font-bold">Error</p>
+                                    <p>{formik.errors.telefono}</p>
+                                </div>
+                            ) : null }
+
+                            <div className="mb-4">
                                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
                                     Password
                                 </label>
@@ -287,40 +332,40 @@ const NuevaCuenta = () => {
                             ) : null }
 
                             <div className="mb-4">
-                                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="select">
+                                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="tipoUsuario">
                                     Tipo de Usuario
                                 </label>
                                 <select
-                                    id="select"
+                                    id="tipoUsuario"
                                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                                     onChange={formik.handleChange}
                                     onBlur={formik.handleBlur}
-                                    value={formik.values.select}
+                                    value={formik.values.tipoUsuario}
                                 >
                                     <option value="">Seleccionar</option>
-                                    <option value="administrador">ADMINISTRADOR</option>
-                                    <option value="monitorista">MONITORISTA</option>
-                                    <option value="sistemas">SISTEMAS</option>
+                                    <option value="administracion">ADMINISTRACION</option>
+                                    <option value="consulta">CONSULTA</option>
+                                    <option value="captura">CAPTURA</option>
                                 </select>
                             </div>
 
-                            { formik.touched.select &&  formik.errors.select ? (
+                            { formik.touched.tipoUsuario &&  formik.errors.tipoUsuario ? (
                                 <div className="my-2 bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
                                     <p className="font-bold">Error</p>
-                                    <p>{formik.errors.select}</p>
+                                    <p>{formik.errors.tipoUsuario}</p>
                                 </div>
                             ) : null }
 
                             <div className="mb-4">
-                                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="estadoUsuario">
-                                    Tipo de Usuario
+                                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="estado">
+                                    Estado Cliente
                                 </label>
                                 <select
-                                    id="estadoUsuario"
+                                    id="estado"
                                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                                     onChange={formik.handleChange}
                                     onBlur={formik.handleBlur}
-                                    value={formik.values.estadoUsuario}
+                                    value={formik.values.estado}
                                 >
                                     <option value="">Seleccionar</option>
                                     <option value="activo">ACTIVO</option>
@@ -328,10 +373,58 @@ const NuevaCuenta = () => {
                                 </select>
                             </div>
 
-                            { formik.touched.estadoUsuario &&  formik.errors.estadoUsuario ? (
+                            { formik.touched.estado &&  formik.errors.estado ? (
                                 <div className="my-2 bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
                                     <p className="font-bold">Error</p>
-                                    <p>{formik.errors.estadoUsuario}</p>
+                                    <p>{formik.errors.estado}</p>
+                                </div>
+                            ) : null }
+
+                        <div className="mb-4">
+                                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="recibeCorreo">
+                                    Recibe Correo
+                                </label>
+                                <select
+                                    id="recibeCorreo"
+                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    onChange={formik.handleChange}
+                                    onBlur={formik.handleBlur}
+                                    value={formik.values.recibeCorreo}
+                                >
+                                    <option value="">Seleccionar</option>
+                                    <option value="si">SI</option>
+                                    <option value="no">NO</option>
+                                </select>
+                            </div>
+
+                            { formik.touched.recibeCorreo &&  formik.errors.recibeCorreo ? (
+                                <div className="my-2 bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
+                                    <p className="font-bold">Error</p>
+                                    <p>{formik.errors.recibeCorreo}</p>
+                                </div>
+                            ) : null }
+
+                            <div className="mb-4">
+                                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="recibeWhatsapp">
+                                    Recibe Whatsapp
+                                </label>
+                                <select
+                                    id="recibeWhatsapp"
+                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    onChange={formik.handleChange}
+                                    onBlur={formik.handleBlur}
+                                    value={formik.values.recibeWhatsapp}
+                                >
+                                    <option value="">Seleccionar</option>
+                                    <option value="si">SI</option>
+                                    <option value="no">NO</option>
+                                </select>
+                            </div>
+
+                            { formik.touched.recibeWhatsapp &&  formik.errors.recibeWhatsapp ? (
+                                <div className="my-2 bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
+                                    <p className="font-bold">Error</p>
+                                    <p>{formik.errors.recibeWhatsapp}</p>
                                 </div>
                             ) : null }
                         
@@ -339,7 +432,7 @@ const NuevaCuenta = () => {
                             <input 
                                 type="submit"
                                 className="bg-green-700 w-full mt-5 p-2 text-white uppercase hover:bg-green-800 cursor-pointer rounded"
-                                value="Agregar Usuario"
+                                value="Agregar Cliente"
                             />
                         </form>
                     </div>

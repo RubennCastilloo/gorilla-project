@@ -13,6 +13,7 @@ const typeDefs = gql`
         tipoUsuario: String
         ingreso: String
         monitoreo: String
+        estadoUsuario: String
     }
 
     type Cliente {
@@ -20,12 +21,12 @@ const typeDefs = gql`
         nombre: String
         apellido: String
         email: String
-        tipoUsuario: tipoCliente
+        tipoUsuario: String
         ingreso: String
         telefono: String
         estado: String
-        recibeCorreo: option
-        recibeWhatsapp: option
+        recibeCorreo: String
+        recibeWhatsapp: String
         cliente: String
     }
 
@@ -41,6 +42,33 @@ const typeDefs = gql`
         querys: [QuerysCliente]
     }
 
+    type Nota {
+        id: ID
+        titulo: String
+        contenido: String
+        autor: String
+        destacada: String
+        encuesta: String
+        banner: String
+        cartoon: String
+        estado: String
+        municipio: String
+        tipo: String
+        fuente: String
+        programa: String
+        link: String
+        portada: String
+        fotoPortada: String
+        pagina: String
+        seccion: String
+        desplegado: String
+        tamanio: String
+        testigo: String
+        fecha: String
+        categoria: String
+        monitorista: String
+    }
+
     type QuerysCliente {
         categoria: String
     }
@@ -54,27 +82,28 @@ const typeDefs = gql`
     #INPUT
 
     input UsuarioInput {
-        nombre: String!
-        apellido: String!
-        email: String!
-        password: String!
-        tipoUsuario: tipoUsuario!
+        nombre: String
+        apellido: String
+        email: String
+        password: String
+        tipoUsuario: tipoUsuario
+        estadoUsuario: estadoUsuario
         ingreso: String
-        monitoreo: String!
+        monitoreo: String
     }
 
     input ClienteInput {
-        nombre: String!
-        apellido: String!
-        email: String!
-        password: String!
-        tipoUsuario: tipoCliente!
+        nombre: String
+        apellido: String
+        email: String
+        password: String
+        tipoUsuario: tipoCliente
         ingreso: String
-        telefono: String!
-        estado: estadoCliente!
-        recibeCorreo: option!
-        recibeWhatsapp: option!
-        cliente: String!
+        telefono: String
+        estado: estadoCliente
+        recibeCorreo: option
+        recibeWhatsapp: option
+        cliente: String
     } 
 
     input QuerysInput {
@@ -86,6 +115,45 @@ const typeDefs = gql`
         whatsapps: option!
         tipo: String!
         querys: [QuerysClienteInput]
+    }
+
+    input NotasInput {
+        id: ID
+        titulo: String
+        contenido: String
+        autor: String
+        destacada: option
+        encuesta: option
+        banner: option
+        cartoon: option
+        estado: String
+        municipio: String
+        tipo: String
+        fuente: String
+        programa: String
+        link: String
+        portada: option
+        fotoPortada: option
+        pagina: String
+        seccion: String
+        desplegado: option
+        tamanio: String
+        testigo: [TestigoInput]
+        fecha: String
+        categoria: [CategoriaInput]
+        monitorista: String
+    }
+
+    input TestigoInput {
+        fecha: String
+        nombre: String
+
+    }
+
+    input CategoriaInput {
+        tipo: String
+        categoria: String
+        calificacion: String
     }
 
     input QuerysClienteInput {
@@ -106,7 +174,7 @@ const typeDefs = gql`
     }
     
     enum tipoCliente {
-        administrador
+        administracion
         consulta
         captura
     }
@@ -120,6 +188,10 @@ const typeDefs = gql`
         activo
         inactivo
     }
+    enum estadoUsuario {
+        activo
+        inactivo
+    }
 
 
     #QUERY
@@ -127,16 +199,22 @@ const typeDefs = gql`
     type Query {
         #Usuarios
         # obtenerUsuario(token: String!): Usuario
+        obtenerUsuarioActualizar(id: ID!): Usuario
         obtenerUsuario: Usuario
         obtenerUsuarios : [Usuario]
 
         #Clientes 
-        obtenerCliente(token: String!): Cliente
+        obtenerClienteActualizar(id: ID!): Cliente
+        obtenerCliente: Cliente
         obtenerClientes : [Cliente]
 
         #Querys
         obtenerQuery(id: ID!) : Querys
         obtenerQuerys : [Querys]
+
+        #Notas
+        obtenerNota(id: ID) : Nota
+        obtenerNotas : [Nota]
     }
 
     #MUTATION
@@ -158,6 +236,11 @@ const typeDefs = gql`
         nuevoQuery(input: QuerysInput) : Querys
         actualizarQuerys(id: ID!, input: QuerysInput) : Querys
         eliminarQuerys(id: ID!) : String
+
+        #Notas
+        nuevaNota(input: NotasInput) : Nota
+        actualizarNota(id: ID!, input: NotasInput) : Nota
+        eliminarNota(id: ID!) : String
 
         
     }
