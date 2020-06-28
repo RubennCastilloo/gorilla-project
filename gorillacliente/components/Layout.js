@@ -1,6 +1,7 @@
 import React from 'react';
 import Head from 'next/head';
 import Sidebar from '../components/Sidebar';
+import SidebarAdmin from '../components/SidebarAdmin';
 import Header from '../components/Header';
 import { useRouter } from 'next/router';
 
@@ -32,7 +33,12 @@ const Layout = ({children}) => {
             ) : (
                 <div className="bg-gray-200 min-h-screen">
                     <div className="flex min-h-screen">
+                    {router.pathname === '/administrador' || router.pathname === '/listausuarios' || router.pathname === '/nuevacuenta' || router.pathname === '/editarusuario/[id]' ? (
+                        <SidebarAdmin />
+                    ) : (
                         <Sidebar />
+                    )}
+                        
                         
                         <main className="sm:w-2/4 xl:w-4/5 sm:min-h-screen p-5">
                             <Header />
