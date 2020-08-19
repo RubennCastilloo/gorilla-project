@@ -33,7 +33,7 @@ const Layout = ({children}) => {
             ) : (
                 <div className="bg-gray-200 min-h-screen">
                     <div className="flex min-h-screen">
-                    {router.pathname === '/administrador' || router.pathname === '/listausuarios' || router.pathname === '/nuevacuenta' || router.pathname === '/editarusuario/[id]' ? (
+                    {router.pathname === '/administrador' || router.pathname === '/listausuarios' || router.pathname === '/nuevacuenta' || router.pathname === '/listaclientes' || router.pathname === '/nuevocliente' || router.pathname === '/editarusuario/[id]' || router.pathname === '/editarcliente/[id]' || router.pathname === '/listamedios'? (
                         <SidebarAdmin />
                     ) : (
                         <Sidebar />
